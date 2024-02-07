@@ -19,3 +19,17 @@ he has his guests choose from three different strategies to ensure that only one
 they must set the sign to "AVAILABLE".
 1. Guests can line up in a queue. Whenever a guest leaves they let the guest at the front of the queue know the showroom is available. 
 Guests can enqueue themselves multiple times.
+
+## Solutions
+
+### Problem 1 Solution
+
+A strategy the guests could use is as follows:
+
+- Have one guest act as a "counter".
+- The rest of the guests will eat a cupcake if there is a cupcake on the platter and they haven't had one yet; otherwise, they leave the platter alone.
+- When the counting guest comes to the platter, if the cupcake is gone, 1 is added to the count, and the cupcake is replaced; otherwise, they leave the platter alone.
+- When the count reaches the number of guests minus 1, it can be assured all the guests have visited the labyrinth at least once.
+
+### Problem 2 Solution
+
