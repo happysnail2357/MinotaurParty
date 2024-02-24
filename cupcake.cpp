@@ -1,7 +1,7 @@
 //
 // cupcake.cpp
 //
-//   by Paul Puhnaty - 2/07/2024
+//   by Paul Puhnaty - 2/23/2024
 //
 //   A program to simulate the Minotaur's Cupcake Problem
 //
@@ -32,16 +32,14 @@
 /*/  Forward Declarations  /*/
 
 bool parseArguments(int32_t argc, char* argv[], int32_t* numThreads);
-
 void printUsage();
-
-void guestLeaderProtocol(int32_t id, bool* cupcake, int32_t numGuests, selectLock* selector, bool* breakout);
-void guestProtocol(int32_t id, bool* cupcake, selectLock* selector, bool* breakout);
+void guestLeaderProtocol(int32_t id, bool* cupcake, selectLock* minotaur, bool* breakout, int32_t numGuests);
+void guestProtocol(int32_t id, bool* cupcake, selectLock* minotaur, bool* breakout);
 
 
 /*/  Constant Definitions  /*/
 
-const int32_t DEFAULT_NUM_THREADS = 5;
+const int32_t DEFAULT_NUM_THREADS = 8;
 const int32_t MAX_NUM_THREADS = 100;
 const int32_t MIN_NUM_THREADS = 2;
 
@@ -63,35 +61,41 @@ int main(int argc, char* argv[])
 	
 	std::cout << "\nNumber of guests: " << numThreads << "\n\n";
 	
-	std::cout << "Guest visit order:\n ";
-	
-	int32_t numThreadsVisited = 0;
 	
 	bool cupcake = true;
 	
-	selectLock selector;
+	selectLock minotaur;
 	
 	bool breakout = false;
 	
 	
 	std::vector<std::thread> thrds;
 	
-	thrds.push_back(std::thread(guestLeaderProtocol, 0, &cupcake, numThreads, &selector, &breakout));
+	thrds.push_back(std::thread(guestLeaderProtocol, 1, &cupcake, &minotaur, &breakout, numThreads));
 	
-	for (int32_t threadID = 1; threadID < numThreads; threadID++)
+	for (int32_t threadID = 2; threadID <= numThreads; threadID++)
 	{
-		thrds.push_back(std::thread(guestProtocol, threadID, &cupcake, &selector, &breakout));
+		thrds.push_back(std::thread(guestProtocol, threadID, &cupcake, &minotaur, &breakout));
 	}
 	
-	while (selector.masterWait())
+	// Begin selecting threads...
+	//
+	while (minotaur.wait())
 	{
-		selector.masterSelect(rand() % numThreads);
+		minotaur.select((rand() % numThreads) + 1);
 	}
 	
+	// Sync with threads
+	//
 	for (auto it = thrds.begin(); it != thrds.end(); it++)
 	{
 		(*it).join();
 	}
+	
+	
+	int32_t numVisits = minotaur.numSelections();
+	
+	std::cout << "There were " << numVisits << " visits to the labyrinth in total\n\n";
 	
 	
 	return 0;
@@ -164,58 +168,63 @@ void printUsage()
 }
 
 
-void guestLeaderProtocol(int32_t id, bool* cupcake, int32_t numGuests, selectLock* selector, bool* breakout)
+void guestLeaderProtocol(int32_t id, bool* cupcake, selectLock* minotaur, bool* breakout, int32_t numGuests)
 {
 	int32_t numGuestsVisited = 0;
 	
 	while (true)
 	{
 		// Wait for selection by the Minotaur
-		selector->waitForTurn(id);
+		minotaur->lock(id);
 		
 		if (*breakout)
 			return;
-		
-		// Report visit
-		std::cout << "C ";
 		
 		if (!(*cupcake))
 		{
 			numGuestsVisited++;
 			
+			// Report visit
+			std::cout << "Guest " << id << ": count " << numGuestsVisited << "\n";
+			
 			if (numGuestsVisited == numGuests - 1)
 			{
-				std::cout << "\n\nAll guests have visited the Labyrinth!\n\n";
+				std::cout << "\nGuest " << id << ": All guests have visited the Labyrinth!\n\n";
 				
 				// Signal all threads to terminate
 				*breakout = true;
 				
 				// Allow all threads to terminate
-				selector->disable();
+				minotaur->disable();
 				
 				return;
 			}
 			
 			*cupcake = true;
 		}
+		else
+		{
+			// Report visit
+			std::cout << "Guest " << id << ": count " << numGuestsVisited << "\n";
+		}
 		
-		selector->finishTurn();
+		minotaur->unlock();
 	}
 }
 
-void guestProtocol(int32_t id, bool* cupcake, selectLock* selector, bool* breakout)
+void guestProtocol(int32_t id, bool* cupcake, selectLock* minotaur, bool* breakout)
 {
 	bool hadCupcake = false;
 	
 	while (true)
 	{
 		// Wait for selection by the Minotaur
-		selector->waitForTurn(id);
+		minotaur->lock(id);
 		
 		if (*breakout)
 			return;
 		
-		std::cout << id << " ";
+		//std::cout << "Guest " << id << ": In the labyrinth\n";
 		
 		// Only eat the cupcake if
 		//   1. haven't had one yet, and
@@ -224,8 +233,10 @@ void guestProtocol(int32_t id, bool* cupcake, selectLock* selector, bool* breako
 		if (!hadCupcake && *cupcake)
 		{
 			*cupcake = false;
+			
+			hadCupcake = true;
 		}
 		
-		selector->finishTurn();
+		minotaur->unlock();
 	}
 }

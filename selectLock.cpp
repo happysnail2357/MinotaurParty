@@ -9,14 +9,22 @@
 
 
 #include "selectLock.hpp"
+#include <thread>
 
 
-void selectLock::waitForTurn(int id)
+void selectLock::lock(int32_t id)
 {
-	while (this->currentSelection != id && this->lockActive);
+	while (this->currentSelection != id && this->lockActive)
+	{
+		// There's no point checking over and over again here
+		// since its not likely we'll be chosen soon, so
+		// just yield to another process
+		
+		std::this_thread::yield();
+	}
 }
 	
-void selectLock::finishTurn()
+void selectLock::unlock()
 {
 	this->currentSelection = -1;
 	
@@ -24,7 +32,7 @@ void selectLock::finishTurn()
 }
 
 
-bool selectLock::selectorWait()
+bool selectLock::wait()
 {
 	while (this->needToSelect == false)
 		if (this->lockActive == false)
@@ -33,9 +41,11 @@ bool selectLock::selectorWait()
 	return true;
 }
 
-void selectLock::selectorSelect(int id)
+void selectLock::select(int32_t id)
 {
 	this->needToSelect = false;
+	
+	this->selections++;
 	
 	this->currentSelection = id;
 }
@@ -46,3 +56,8 @@ void selectLock::disable()
 	this->lockActive = false;
 }
 
+
+int32_t selectLock::numSelections()
+{
+	return this->selections;
+}

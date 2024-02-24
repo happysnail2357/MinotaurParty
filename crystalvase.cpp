@@ -74,6 +74,7 @@ int main(int argc, char* argv[])
 	//
 	queueLock showroomEntranceStrategy(numThreads);
 	
+	std::cout << "Starting... ";
 	
 	std::vector<std::thread> thrds;
 	
@@ -95,9 +96,11 @@ int main(int argc, char* argv[])
 		(*it).join();
 	}
 	
+	std::cout << "Finished\n";
+	
 	int32_t numVisits = showroomEntranceStrategy.numberOfAccesses();
 	
-	std::cout << "\nNumber of visits requested: " << visitsRequested;
+	std::cout << "\nNumber of showroom visits requested: " << visitsRequested;
 	std::cout << "\nActual number of visits: " << numVisits << "\n\n";
 	
 	
@@ -179,7 +182,7 @@ void guest(int32_t id, queueLock* showroom, int32_t visits, std::atomic<bool>* v
 		
 		if (viewingCrystalVase->exchange(true))
 		{
-			std::cout << "Guest " << id << ": Yikes! Somebody is already in the showroom!\n";
+			std::cout << "\n\nGuest " << id << ": Yikes! Somebody is already in the showroom!\n";
 			
 			showroom->unlock(key);
 			
@@ -187,7 +190,7 @@ void guest(int32_t id, queueLock* showroom, int32_t visits, std::atomic<bool>* v
 		}
 		else
 		{
-			std::cout << "Guest " << id << ": Visiting the showroom\n";
+			//std::cout << "Guest " << id << ": Visiting the showroom\n";
 			
 			viewingCrystalVase->store(false);
 		}

@@ -14,7 +14,7 @@ queueLock::queueLock(int32_t size)
 {
 	this->size = size;
 	
-	flag.resize(size);
+	flag.resize(size * 4);
 	
 	flag.at(0) = true;
 }
@@ -29,7 +29,7 @@ int32_t queueLock::lock()
 	
 	// Spin...
 	//
-	while (this->flag.at(key) == false);
+	while (this->flag.at(key * 4) == false);
 	
 	// Entering critical section...
 	
@@ -43,11 +43,11 @@ void queueLock::unlock(int32_t key)
 {
 	// Mark this slot as not running
 	//
-	this->flag.at(key) = false;
+	this->flag.at(key * 4) = false;
 	
 	// Mark the next slot to run
 	//
-	this->flag.at((key + 1) % this->size) = true;
+	this->flag.at(((key + 1) % this->size) * 4) = true;
 }
 
 

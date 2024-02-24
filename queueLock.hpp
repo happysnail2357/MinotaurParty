@@ -24,7 +24,6 @@ public:
 
 	queueLock(int32_t size);
 
-
 	// Attempt to acquire the lock
 	int32_t lock();
 

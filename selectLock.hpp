@@ -12,26 +12,33 @@
 #define SELECT_LOCK_HPP
 
 
+// int32_t
+#include <cstdint>
+
+
 class selectLock
 {
 public:
 
 	// Attempt to acquire the lock
-	void waitForTurn(int id);
+	void lock(int32_t id);
 	
 	// Release the lock for the next thread
-	void finishTurn();
+	void unlock();
 	
 	
 	// The selecting thread will spin until it is needed
-	bool masterWait();
+	bool wait();
 	
 	// The selecting thread chooses the next thread to acquire the lock
-	void masterSelect(int id);
+	void select(int32_t id);
 	
 	
 	// Allows all threads into their critical sections
 	void disable();
+	
+	
+	int32_t numSelections();
 
 private:
 
@@ -39,7 +46,9 @@ private:
 
 	bool needToSelect = true;
 	
-	int currentSelection = -1;
+	int32_t currentSelection = -1;
+	
+	int32_t selections{};
 };
 
 
