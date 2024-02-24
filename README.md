@@ -84,5 +84,5 @@ When the currently running thread calls unlock(), it sets its slot value to *fal
 A slot is assigned to a thread through an atomic get-and-increment operation, so no two threads will ever be assigned the same slot. Also, no thread can enter the critical section 
 until after the thread currently in the critical section calls unlock(). Therefore, mutual exclusion is preserved.
 
-Due to the nature of the queue, all threads that attempt to obtain the lock will eventually get it. Results of experimentation show that execution is extremely fast--even the 
+Due to the nature of the queue, all threads that attempt to obtain the lock will eventually get it. Results of experimentation show that execution is extremely fast—even at the 
 max value of 100 threads.
